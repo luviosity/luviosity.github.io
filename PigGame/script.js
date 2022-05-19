@@ -15,12 +15,6 @@ const player = {
   },
 };
 
-// const player0El = document.querySelector('.player--0');
-// const player1El = document.querySelector('.player--1');
-// const score0El = document.getElementById('score--0');
-// const score1El = document.getElementById('score--1');
-// const current0El = document.getElementById('current--0');
-// const current1El = document.getElementById('current--1');
 const diceImg = document.querySelector('.dice');
 const btnNew = document.querySelector('.btn--new');
 const btnRoll = document.querySelector('.btn--roll');
@@ -32,44 +26,36 @@ const overlay = document.querySelector('.overlay');
 let currentScore = 0;
 let activePlayer = 0;
 
-const switchPlayers = function (id) {
-  if (id === 0) {
-    player[0].player.classList.remove('player--active');
-    player[1].player.classList.add('player--active');
-  } else if (id === 1) {
-    player[1].player.classList.remove('player--active');
-    player[0].player.classList.add('player--active');
-  }
+const switchPlayers = function () {
+  player[0].player.classList.toggle('player--active');
+  player[1].player.classList.toggle('player--active');
   currentScore = 0;
   player[activePlayer].current.textContent = currentScore;
+  // change the current player
   activePlayer = (activePlayer + 1) % 2;
 };
 
 const resetFunction = function () {
+  currentScore = 0;
   for (let id = 0; id < 2; id++) {
     player[id].scoreValue = 0;
     player[id].score.textContent = player[id].scoreValue;
-    currentScore = 0;
     player[id].current.textContent = currentScore;
-    diceImg.classList.add('hidden');
-    if (activePlayer === 1) {
-      switchPlayers(activePlayer);
-      activePlayer = 0;
-    }
+  }
+  diceImg.classList.add('hidden');
+  if (activePlayer === 1) {
+    switchPlayers();
+    activePlayer = 0;
   }
 };
 
-const showModal = function () {
-  winnerModal.classList.remove('hidden');
-  overlay.classList.remove('hidden');
-};
-
-const closeModal = function () {
-  winnerModal.classList.add('hidden');
-  overlay.classList.add('hidden');
+const blinkModal = function () {
+  winnerModal.classList.toggle('hidden');
+  overlay.classList.toggle('hidden');
 };
 
 btnRoll.addEventListener('click', function () {
+  btnRoll.blur();
   // 1. Roll random dice
   const dice = Math.trunc(Math.random() * 6) + 1;
   // 2. Display dice image
@@ -80,26 +66,38 @@ btnRoll.addEventListener('click', function () {
     currentScore += dice;
     player[activePlayer].current.textContent = currentScore;
   } else {
-    switchPlayers(activePlayer);
+    switchPlayers();
   }
 });
 
 btnHold.addEventListener('click', function () {
+  btnHold.blur();
+  // 1. Add the current score to the total
   player[activePlayer].scoreValue += currentScore;
-  if (player[activePlayer].scoreValue >= 100) {
+  if (player[activePlayer].scoreValue >= 10) {
+    // 2. Once player reaches 100 points, he wins the game
     winnerText.textContent = `The winner is PLAYER ${activePlayer + 1} 🏆`;
-    showModal();
+    blinkModal();
   } else {
+    // 2. Otherwise switch the turn
     player[activePlayer].score.textContent = player[activePlayer].scoreValue;
-    switchPlayers(activePlayer);
+    switchPlayers();
   }
 });
 
 btnNew.addEventListener('click', function () {
+  btnNew.blur();
   resetFunction();
 });
 
 overlay.addEventListener('click', function () {
-  closeModal();
+  blinkModal();
   resetFunction();
+});
+
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' || e.key == 'Enter') {
+    blinkModal();
+    resetFunction();
+  }
 });
