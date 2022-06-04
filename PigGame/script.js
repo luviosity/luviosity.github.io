@@ -74,7 +74,7 @@ btnHold.addEventListener('click', function () {
   btnHold.blur();
   // 1. Add the current score to the total
   player[activePlayer].scoreValue += currentScore;
-  if (player[activePlayer].scoreValue >= 10) {
+  if (player[activePlayer].scoreValue >= 100) {
     // 2. Once player reaches 100 points, he wins the game
     winnerText.textContent = `The winner is PLAYER ${activePlayer + 1} 🏆`;
     blinkModal();
