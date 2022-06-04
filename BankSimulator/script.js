@@ -43,6 +43,23 @@ const account2 = {
 
 const accounts = [account1, account2];
 
+// Object for currency exchange during the transfer
+const curConverter = {
+  USD: 1.07,
+};
+
+curConverter['EUR'] = +(1 / curConverter['USD']).toFixed(2);
+
+const test = {
+  a: 1,
+  b: function () {
+    console.log(this);
+    return this.a;
+  },
+};
+
+console.log(curConverter);
+
 /////////////////////////////////////////////////
 //APP
 
@@ -196,6 +213,7 @@ const calcDisplaySummary = function (acc) {
     .map(int => (int * acc.interestRate) / 100)
     .filter(int => int >= 1)
     .reduce((acc, int) => acc + int, 0);
+
   labelSumInterest.textContent = `${formatCur(
     sumInterest,
     acc.locale,
@@ -260,10 +278,12 @@ btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
   const amount = +inputLoanAmount.value;
   if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
-    currentAccount.movements.push(amount);
-    currentAccount.movementsDates.push(new Date().toISOString());
-    updateUI(currentAccount);
-    // Clear input windows
+    setTimeout(function () {
+      currentAccount.movements.push(amount);
+      currentAccount.movementsDates.push(new Date().toISOString());
+      updateUI(currentAccount);
+      // Clear input windows
+    }, 5000);
     inputLoanAmount.value = '';
     inputLoanAmount.blur();
   }
@@ -283,7 +303,7 @@ btnTransfer.addEventListener('click', function (e) {
     // Update movements
     currentAccount.movements.push(-amount);
     currentAccount.movementsDates.push(new Date());
-    receiverAcc.movements.push(amount);
+    receiverAcc.movements.push(amount * curConverter[receiverAcc['currency']]);
     receiverAcc.movementsDates.push(new Date());
 
     updateUI(currentAccount);
@@ -307,6 +327,7 @@ btnClose.addEventListener('click', function (e) {
       1
     );
     containerApp.style.opacity = 0;
+    labelWelcome.textContent = 'Log in to get started';
     inputCloseUsername.value = inputClosePin.value = '';
   }
 });
