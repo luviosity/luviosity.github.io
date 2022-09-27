@@ -82,7 +82,7 @@ class App {
     // Get data from local storage
     this._getLocalStorage();
 
-    form.addEventListener('submit', this._newWorkout.bind(this));
+    form.addEventListener('keydown', this._newWorkout.bind(this));
     document.addEventListener('keydown', this._hideFormOnKey.bind(this));
     // attaching event listener to input type field
     inputType.addEventListener('change', this._toggleElevationField);
@@ -328,6 +328,9 @@ class App {
   }
 
   _newWorkout(e) {
+    // for Safari browser "submit" doesn't work
+    if (e.key !== 'Enter') return;
+
     e.preventDefault();
     // two helper functions to check inputs
     // checking if all inputs are positive
