@@ -70,8 +70,10 @@ class App {
   #markerIcon = L.icon({
     iconUrl: 'imgs/location.png',
     iconSize: [45, 50],
-    popupAnchor: [0, -20],
+    popupAnchor: [0, -45],
+    iconAnchor: [22.5, 50],
   });
+  #editWorkoutEl;
 
   constructor() {
     // Get user's position
@@ -81,6 +83,7 @@ class App {
     this._getLocalStorage();
 
     form.addEventListener('submit', this._newWorkout.bind(this));
+    document.addEventListener('keydown', this._hideFormOnKey.bind(this));
     // attaching event listener to input type field
     inputType.addEventListener('change', this._toggleElevationField);
     containerWorkouts.addEventListener(
@@ -113,7 +116,7 @@ class App {
     }).addTo(this.#map);
 
     // Handling clicks on map
-    this.#map.on('click', this._showForm.bind(this));
+    this.#map.on('click', this._mapHandler.bind(this));
 
     this._renderAllWorkoutMarkers();
   }
@@ -127,7 +130,14 @@ class App {
       className: `${workout.type}-popup`,
     });
 
-    this.#markers.push(marker);
+    if (this.#editWorkoutEl) {
+      this.#markers.splice(
+        this._getWorkoutIndex(this.#editWorkoutEl),
+        0,
+        marker
+      );
+    } else this.#markers.push(marker);
+
     marker.addTo(this.#map).openPopup();
   }
 
@@ -186,7 +196,9 @@ class App {
       `;
     }
 
-    form.insertAdjacentHTML('afterend', html);
+    const el = this.#editWorkoutEl ? this.#editWorkoutEl : form;
+
+    el.insertAdjacentHTML('afterend', html);
   }
 
   _workoutHandler(marker) {
@@ -199,7 +211,6 @@ class App {
     if (!workoutEl) return;
 
     if (targetEl.closest('.workout__more')) {
-      // if (!targetEl.classList.contains('workout__more--btn-edit'))
       this._toggleMoreMenu(workoutEl);
       if (targetEl.classList.contains('workout__more--content-btn')) {
         if (targetEl.id === 'edit') this._editWorkout(workoutEl);
@@ -221,6 +232,7 @@ class App {
 
   _editWorkout(workoutEl) {
     const workout = this._findWorkout(workoutEl.dataset.id);
+    this.#editWorkoutEl = workoutEl;
 
     const toggler = function (inputEl) {
       if (inputEl.closest('div').classList.contains('form__row--hidden'))
@@ -246,9 +258,7 @@ class App {
 
   _deleteWorkout(workoutEl) {
     // 1. Deleting from the list
-
-    const workout = this._findWorkout(workoutEl.dataset.id);
-    const workoutInd = this.#workouts.indexOf(workout);
+    const workoutInd = this._getWorkoutIndex(workoutEl);
 
     if (workoutInd > -1) {
       this.#workouts.splice(workoutInd, 1);
@@ -312,6 +322,11 @@ class App {
     setTimeout(() => (form.style.display = 'grid'), 5);
   }
 
+  _hideFormOnKey(e) {
+    if (e.key === 'Escape' && !form.classList.contains('hidden'))
+      this._hideForm();
+  }
+
   _newWorkout(e) {
     e.preventDefault();
     // two helper functions to check inputs
@@ -353,20 +368,31 @@ class App {
       workout = new Cycling([lat, lng], distance, duration, elevation);
     }
 
+    // Render workout on list
+    this._renderWorkout(workout);
+
+    // update workout list
+    if (this.#editWorkoutEl) {
+      this._deleteWorkout(this.#editWorkoutEl);
+      this.#workouts.splice(
+        this._getWorkoutIndex(this.#editWorkoutEl),
+        0,
+        workout
+      );
+    }
     // Add new object to workout array
-    this.#workouts.push(workout);
+    else this.#workouts.push(workout);
 
     // Render workout on map as marker
     this._renderWorkoutMarker(workout);
-
-    // Render workout on list
-    this._renderWorkout(workout);
 
     // Hide form + clear input fields
     this._hideForm();
 
     // Set local storage to all workouts
     this._setLocalStorage();
+
+    this.#editWorkoutEl = null;
   }
 
   _setLocalStorage() {
@@ -393,6 +419,10 @@ class App {
 
   _renderAllWorkoutMarkers() {
     this.#workouts.forEach(work => this._renderWorkoutMarker(work));
+  }
+
+  _getWorkoutIndex(workoutEl) {
+    return this.#workouts.indexOf(this._findWorkout(workoutEl.dataset.id));
   }
 
   reset() {
